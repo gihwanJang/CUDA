@@ -14,7 +14,7 @@
 
 #### 하드웨어
 - cpu : Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
-- gpu  
+- gpu : NVIDIA GeForce RTX 2060/PCIe/SSE2   
 +--------------------------------------------------------------------------------------------------------+  
 |&nbsp;NVIDIA-SMI 525.105.17&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Driver&nbsp;Version:&nbsp;525.105.17&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CUDA&nbsp;Version:&nbsp;12.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 +--------------------------------------------------------------------------------------------------------+  
