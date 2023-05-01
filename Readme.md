@@ -12,28 +12,17 @@
     - Version: 7.5.0
 - Language : C++, Make, CUDA
 
-- hardware
-    - cpu : Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
-    - gpu  
-+-----------------------------------------------------------------------------+  
-| NVIDIA-SMI 525.105.17   Driver Version: 525.105.17   CUDA Version: 12.0     |  
-|-------------------------------+----------------------+----------------------+  
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |  
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |  
-|                               |                      |               MIG M. |  
-|===============================+======================+======================|  
-|   0  NVIDIA GeForce ...  Off  | 00000000:01:00.0  On |                  N/A |  
-|  0%   54C    P5    18W / 160W |    552MiB /  6144MiB |     33%      Default |  
-|                               |                      |                  N/A |  
-+-------------------------------+----------------------+----------------------+  
-                                                                                 
-+-----------------------------------------------------------------------------+  
-| Processes:                                                                  |  
-|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |  
-|        ID   ID                                                   Usage      |  
-|=============================================================================|  
-|    0   N/A  N/A      1412      G   /usr/lib/xorg/Xorg                243MiB |  
-|    0   N/A  N/A      2864      G   /usr/bin/gnome-shell               45MiB |  
-|    0   N/A  N/A      3547      G   ...RendererForSitePerProcess      139MiB |  
-|    0   N/A  N/A      4411      G   ...473269103524995576,131072      120MiB |  
-+-----------------------------------------------------------------------------+  
+#### 하드웨어
+- cpu : Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+- gpu  
+
++--------------------------------------------------------------------------------------------------------------------+  
+|&nbsp;NVIDIA-SMI 525.105.17&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Driver&nbsp;Version:&nbsp;525.105.17&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CUDA&nbsp;Version:&nbsp;12.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+|-----------------------------------------------------+----------------------------+--------------------------------+  
+|&nbsp;GPU&nbsp;&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Persistence-M&nbsp;|&nbsp;Bus-Id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Disp.A&nbsp;|&nbsp;Volatile&nbsp;&nbsp;Uncorr.&nbsp;&nbsp;ECC&nbsp;&nbsp;|  
+|&nbsp;Fan&nbsp;&nbsp;&nbsp;Temp&nbsp;&nbsp;&nbsp;Perf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pwr:Usage/Cap|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Memory-Usage&nbsp;|&nbsp;GPU-Util  Compute M. |  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MIG M.&nbsp;|  
+|============================+================+================|  
+|&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NVIDIA&nbsp;GeForce ...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Off&nbsp;&nbsp;|&nbsp;00000000:01:00.0&nbsp;On&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N/A&nbsp;&nbsp;|  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N/A |  
++---------------------------------------------------+---------------------------------+----------------------------+  
