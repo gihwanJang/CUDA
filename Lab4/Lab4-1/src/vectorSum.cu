@@ -8,7 +8,7 @@
 #include "timer/DS_definitions.h"
 #include "timer/DS_timer.h"
 
-#define DATA_SIZE 1024 * 1024 * 256
+#define DATA_SIZE 1024 * 1024 * 128
 
 __global__ void vectorSum(int *_a, int *_b, int *_res, long _size){
     long tID = blockIdx.x * blockDim.x + threadIdx.x;
@@ -52,8 +52,8 @@ int main(){
     DS_timer timer(5);
 	settingTimmer(timer, names);
     
-    dim3 dimGrid(DATA_SIZE / 256, 1, 1);
-    dim3 dimBlock(256, 1, 1);
+    dim3 blockDim(1024);
+    dim3 gridDim(DATA_SIZE / blockDim.x);
 
     long memSize = sizeof(int) * DATA_SIZE;
 
@@ -72,6 +72,8 @@ int main(){
 		b[i] = rand() % 10;
 	}
 
+    printf("Data Size : %d\n", DATA_SIZE);
+
     timer.onTimer(1);
     hostVectorSum(a, b, h_res);
     timer.offTimer(1);
@@ -84,7 +86,7 @@ int main(){
     timer.offTimer(3);
 
     timer.onTimer(2);
-	vectorSum<<<dimGrid, dimBlock>>>(d_a, d_b, d_res, DATA_SIZE);
+	vectorSum<<<gridDim, blockDim>>>(d_a, d_b, d_res, DATA_SIZE);
 	cudaDeviceSynchronize();
 	timer.offTimer(2);
 
