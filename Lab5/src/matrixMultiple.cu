@@ -97,12 +97,12 @@ int main(){
     float *d_a, *d_b, *d_res;
 
     // timer setting
-	timer.setTimerName(0, "sirial Compute");
-	timer.setTimerName(1, "openmp Compute");
+    timer.setTimerName(0, "sirial Compute");
+    timer.setTimerName(1, "openmp Compute");
     timer.setTimerName(2, "cuda Compute total");
-	timer.setTimerName(3, "cuda Compute");
-	timer.setTimerName(4, "host -> device");
-	timer.setTimerName(5, "device -> host");
+    timer.setTimerName(3, "cuda Compute");
+    timer.setTimerName(4, "host -> device");
+    timer.setTimerName(5, "device -> host");
 
     // host memory malloc
     a = new float[MAT_A_SIZE];
@@ -165,14 +165,14 @@ int main(){
 
     // host memory free
     delete a;
-	delete b;
-	delete s_res;
-	delete omp_res;
+    delete b;
+    delete s_res;
+    delete omp_res;
     delete cuda_res;
 
     // device memory free
-	cudaFree(d_a);
-	cudaFree(d_b);
+    cudaFree(d_a);
+    cudaFree(d_b);
     cudaFree(d_res);
     return 0;
 }
