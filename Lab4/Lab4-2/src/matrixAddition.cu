@@ -77,11 +77,11 @@ int main(){
     DS_timer timer(5);
 	settingTimmer(timer, names);
 
-    //dim3 blockDim(32, 32);
+    //dim3 blockDim(16, 8);
 	//dim3 gridDim(ROW_SIZE / blockDim.x, COL_SIZE / blockDim.y);
-    //dim3 blockDim(1024);
+    //dim3 blockDim(128);
 	//dim3 gridDim(ROW_SIZE * COL_SIZE / blockDim.x);
-    dim3 blockDim(1024);
+    dim3 blockDim(256);
 	dim3 gridDim(COL_SIZE / blockDim.x, ROW_SIZE);
     
     long mem_size = sizeof(int) * MAT_SIZE;
