@@ -28,11 +28,9 @@ __global__ void cudaMatrixMultiplication(
     int row = blockDim.x * blockIdx.x + threadIdx.x;
 	int col = blockDim.y * blockIdx.y + threadIdx.y;
 
-	if (row >= m || col >= n)
-		return;
-
-	for(int i = 0 ; i < k; ++i)
-		matC[row * n + col] += matA[row * k + i] * matB[i * n + col];
+    if (row < m && col < n)
+	    for(int i = 0 ; i < k; ++i)
+		    matC[row * n + col] += matA[row * k + i] * matB[i * n + col];
 }
 
 void ompMatrixMultiplication(float*a, float*b, float*res){
