@@ -11,12 +11,12 @@
 
 #define BLOCK_SIZE 16
 
-#define MAT_A_ROW_SIZE (1024) 
-#define MAT_A_COL_SIZE (512)
+#define MAT_A_ROW_SIZE (2048) // m 
+#define MAT_A_COL_SIZE (2048) // k
 #define MAT_A_SIZE (MAT_A_ROW_SIZE * MAT_A_COL_SIZE)
 
 #define MAT_B_ROW_SIZE (MAT_A_COL_SIZE)
-#define MAT_B_COL_SIZE (1024)
+#define MAT_B_COL_SIZE (2048) // n
 #define MAT_B_SIZE (MAT_B_ROW_SIZE * MAT_B_COL_SIZE)
 
 #define MAT_RES_SIZE (MAT_A_ROW_SIZE * MAT_B_COL_SIZE)
@@ -34,11 +34,13 @@ __global__ void cudaMatrixMultiplication(
 }
 
 void ompMatrixMultiplication(float*a, float*b, float*res){
-    #pragma omp parallel for collapse(3) num_threads(8)
-    for(int m = 0; m < MAT_A_ROW_SIZE; ++m)
-        for(int n = 0; n < MAT_B_COL_SIZE; ++n)
+    #pragma omp parallel for num_threads(8)
+    for(int m = 0; m < MAT_A_ROW_SIZE; ++m){
+        for(int n = 0; n < MAT_B_COL_SIZE; ++n){
             for(int k = 0; k < MAT_A_COL_SIZE; ++k)
                 res[m * MAT_B_COL_SIZE + n] += a[m * MAT_A_COL_SIZE + k] * b[k * MAT_B_COL_SIZE + n];
+        }
+    }
 }
 
 void serialMatrixMultiplication(float*a, float*b, float*res){
@@ -78,7 +80,7 @@ void checkResult(float*serial_res, float*omp_res, float*cuda_res){
 
 void dataGenerate(float*mat, int matSize){
     for(int i = 0; i < matSize; ++i)
-        mat[i] = (rand() % 100000) / 10000;
+        mat[i] = double(rand() % 100000) / 10000;
 }
 
 int main(){
@@ -95,12 +97,12 @@ int main(){
     float *d_a, *d_b, *d_res;
 
     // timer setting
-    timer.setTimerName(0, "sirial Compute");
-    timer.setTimerName(1, "openmp Compute");
-    timer.setTimerName(2, "cuda Compute total");
-    timer.setTimerName(3, "cuda Compute");
-    timer.setTimerName(4, "host -> device");
-    timer.setTimerName(5, "device -> host");
+    timer.setTimerName(0, (char*)"sirial Compute");
+    timer.setTimerName(1, (char*)"openmp Compute");
+    timer.setTimerName(2, (char*)"cuda Compute total");
+    timer.setTimerName(3, (char*)"cuda Compute");
+    timer.setTimerName(4, (char*)"host -> device");
+    timer.setTimerName(5, (char*)"device -> host");
 
     // host memory malloc
     a = new float[MAT_A_SIZE];
@@ -126,6 +128,12 @@ int main(){
     dataGenerate(a, MAT_A_SIZE);
     dataGenerate(b, MAT_B_SIZE);
 
+    // show matrix size
+    printf("Mat A data size : %d x %d\n", MAT_A_ROW_SIZE, MAT_A_COL_SIZE);
+    printf("Mat A memory size : %ld\n", aMemSize);
+    printf("Mat B data size : %d x %d\n",MAT_B_ROW_SIZE, MAT_B_COL_SIZE);
+    printf("Mat B memory size : %ld\n", bMemSize);
+
     // serial matrix multiplication
     timer.onTimer(0);
     serialMatrixMultiplication(a, b, s_res);
@@ -146,7 +154,9 @@ int main(){
 
     // cuda matrix multiplication
     timer.onTimer(3);
-    cudaMatrixMultiplication<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
+    cudaMatrixMultiplication<<<gridDim, blockDim>>>(
+        d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE
+        );
     cudaDeviceSynchronize();
     timer.offTimer(3);
 

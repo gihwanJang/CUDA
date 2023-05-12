@@ -5,7 +5,7 @@ CXXFLAGS := -std=c++11 -Wall -fopenmp
 # nvcc 컴파일러를 설정합니다.
 NVCC := nvcc
 # nvcc 컴파일러 플래그를 설정합니다.
-NVCCFLAGS := -std=c++11 -arch=sm_75 -Xcompiler -fopenmp
+NVCCFLAGS := -std=c++11 -arch=sm_75 -Xcompiler -fopenmp -fmad=false
 # include 경로를 설정합니다.
 INCLUDE_PATH = -I./include
 
