@@ -35,12 +35,10 @@ __global__ void cudaMatrixMultiplication(
 
 void ompMatrixMultiplication(float*a, float*b, float*res){
     #pragma omp parallel for num_threads(8)
-    for(int m = 0; m < MAT_A_ROW_SIZE; ++m){
-        for(int n = 0; n < MAT_B_COL_SIZE; ++n){
+    for(int m = 0; m < MAT_A_ROW_SIZE; ++m)
+        for(int n = 0; n < MAT_B_COL_SIZE; ++n)
             for(int k = 0; k < MAT_A_COL_SIZE; ++k)
                 res[m * MAT_B_COL_SIZE + n] += a[m * MAT_A_COL_SIZE + k] * b[k * MAT_B_COL_SIZE + n];
-        }
-    }
 }
 
 void serialMatrixMultiplication(float*a, float*b, float*res){
