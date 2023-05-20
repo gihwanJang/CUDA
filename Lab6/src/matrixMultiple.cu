@@ -40,40 +40,29 @@ __global__ void cudaMatrixMultiplication(
 */
 
 __global__ void cudaMatrixMultiplication(float* matA, float* matB, float* matC, long m, long n, long k){
-    // Define shared memory arrays
     __shared__ float sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ float sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
 
     int row = blockDim.x * blockIdx.x + threadIdx.x;
     int col = blockDim.y * blockIdx.y + threadIdx.y;
 
-    float result = 0.0f;
+    float result = 0;
 
-    // Loop over tiles
-    for (int t = 0; t < ceil((float)k / BLOCK_SIZE); t++) {
-        // Load tiles of matA and matB into shared memory
-        if ((row < m) && (t * BLOCK_SIZE + threadIdx.y) < k)
-            sharedMatA[threadIdx.x][threadIdx.y] = matA[row * k + t * BLOCK_SIZE + threadIdx.y];
-        else
-            sharedMatA[threadIdx.x][threadIdx.y] = 0.0f;
+    for (int t = 0; t < ceil((float)k / BLOCK_SIZE); ++t) {
+        int row_condition = ((row < m) && (t * BLOCK_SIZE + threadIdx.y) < k);
+        int col_condition = ((col < n) && (t * BLOCK_SIZE + threadIdx.x) < k);
 
-        if ((col < n) && (t * BLOCK_SIZE + threadIdx.x) < k)
-            sharedMatB[threadIdx.x][threadIdx.y] = matB[(t * BLOCK_SIZE + threadIdx.x) * n + col];
-        else
-            sharedMatB[threadIdx.x][threadIdx.y] = 0.0f;
+        sharedMatA[threadIdx.x][threadIdx.y] = matA[row * k + t * BLOCK_SIZE + threadIdx.y] * row_condition;
+        sharedMatB[threadIdx.x][threadIdx.y] = matB[(t * BLOCK_SIZE + threadIdx.x) * n + col] * col_condition;
 
-        // Synchronize threads before computation
         __syncthreads();
 
-        // Perform matrix multiplication within the tile
-        for (int i = 0; i < BLOCK_SIZE; i++)
+        for (int i = 0; i < BLOCK_SIZE; ++i)
             result += sharedMatA[threadIdx.x][i] * sharedMatB[i][threadIdx.y];
 
-        // Synchronize threads after computation
         __syncthreads();
     }
 
-    // Write result to output matrix
     if ((row < m) && (col < n))
         matC[row * n + col] = result;
 }
