@@ -39,7 +39,8 @@ __global__ void cudaMatrixMultiplication(
 }
 */
 
-__global__ void cudaMatrixMultiplication(float* matA, float* matB, float* matC, long m, long n, long k){
+/*
+__global__ void cudaMatrixMultiplicationUsingSharedMemory(float* matA, float* matB, float* matC, long m, long n, long k){
     __shared__ float sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ float sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
 
@@ -54,6 +55,35 @@ __global__ void cudaMatrixMultiplication(float* matA, float* matB, float* matC, 
 
         sharedMatA[threadIdx.x][threadIdx.y] = matA[row * k + t * BLOCK_SIZE + threadIdx.y] * row_condition;
         sharedMatB[threadIdx.x][threadIdx.y] = matB[(t * BLOCK_SIZE + threadIdx.x) * n + col] * col_condition;
+
+        __syncthreads();
+
+        for (int i = 0; i < BLOCK_SIZE; ++i)
+            result += sharedMatA[threadIdx.x][i] * sharedMatB[i][threadIdx.y];
+
+        __syncthreads();
+    }
+
+    if ((row < m) && (col < n))
+        matC[row * n + col] = result;
+}
+*/
+
+__global__ void cudaMatrixMultiplicationUsingSharedMemoryUpgrade(float* matA, float* matB, float* matC, long m, long n, long k){
+    __shared__ float sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ float sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
+
+    int row = blockDim.x * blockIdx.x + threadIdx.x;
+    int col = blockDim.y * blockIdx.y + threadIdx.y;
+
+    float result = 0;
+
+    for (int t = 0; t < ceil((float)k / BLOCK_SIZE); ++t) {
+        bool row_condition = ((row < m) && (t * BLOCK_SIZE + threadIdx.y) < k);
+        bool col_condition = ((col < n) && (t * BLOCK_SIZE + threadIdx.x) < k);
+        
+        sharedMatA[threadIdx.x][threadIdx.y] = row_condition ? matA[row * k + t * BLOCK_SIZE + threadIdx.y] : 0;
+        sharedMatB[threadIdx.x][threadIdx.y] = col_condition ? matB[(t * BLOCK_SIZE + threadIdx.x) * n + col] : 0;
 
         __syncthreads();
 
@@ -186,7 +216,9 @@ int main(){
 
     // cuda matrix multiplication
     timer.onTimer(3);
-    cudaMatrixMultiplication<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
+    //cudaMatrixMultiplication<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
+    //cudaMatrixMultiplicationUsingSharedMemory<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
+    cudaMatrixMultiplicationUsingSharedMemoryUpgrade<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
     cudaDeviceSynchronize();
     timer.offTimer(3);
 
