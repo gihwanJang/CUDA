@@ -1,43 +1,38 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
-#include "trapezoidal/trapezoidalGPU.h"
-#include "trapezoidal/trapezoidalCPU.h"
-
-#include "parameter/parameter.h"
-
-#include "timer/DS_timer.h"
-#include "timer/DS_definitions.h"
+#include "trapezoidal/trapezoidal_gpu.h"
+#include "trapezoidal/trapezoidal_cpu.h"
 
 int main(){
     DS_timer timer(6);
 
     // timer setting
-    timer.setTimerName(0, (char *)"serial Compute");
-    timer.setTimerName(1, (char *)"openmp Compute");
-    timer.setTimerName(2, (char *)"cuda Compute");
-    timer.setTimerName(3, (char *)"cuda Optimizing Compute");
-    timer.setTimerName(4, (char *)"host -> device");
-    timer.setTimerName(5, (char *)"device -> host");
+    timer.setTimerName(SERIAL, (char *)"serial Compute");
+    timer.setTimerName(OPENMP, (char *)"openmp Compute");
+    timer.setTimerName(CUDA_BASIC, (char *)"cuda Compute");
+    timer.setTimerName(CUDA_OPTIMIZING, (char *)"cuda Optimizing Compute");
+    timer.setTimerName(MEMORY_SETTING_1, (char *)"memory copy");
+    timer.setTimerName(MEMORY_SETTING_2, (char *)"memory copy");
 
-    float h = float(END - START) / float(SECTION);
-    float d_res = 0;
-    float serial_res = 0;
-    float omp_res = 0;
-    float cuda_res = 0;
+    double h = double(END - START) / double(SECTION);
+    double serial_res = 0;
+    double omp_res = 0;
+    double cuda_res;
 
     // serial trapezoidal
-    timer.onTimer(0);
-    serialTrapezoidal(serial_res, h);
-    timer.offTimer(0);
+    serialTrapezoidal(serial_res, h, timer, SERIAL);
+    printf("serial result : %lf\n", serial_res);
 
     // openMP trapezoidal
-    timer.onTimer(1);
-    ompTrapezoidal(omp_res, h);
-    timer.offTimer(1);
+    ompTrapezoidal(omp_res, h, timer, OPENMP);
+    printf("openMP result : %lf\n", omp_res);
 
-    printf("serial result : %f\n", serial_res);
-    printf("openMP result : %f\n", omp_res);
+    // cuda basic trapezoidal
+    kernelCall(cuda_res, h, timer, CUDA_BASIC);
+    printf("cuda basic result : %lf\n", cuda_res);
+
+    // cuda optimizing trapezoidal
+    kernelCall(cuda_res, h, timer, CUDA_OPTIMIZING);
+    printf("cuda basic result : %lf\n", cuda_res);
+
     timer.printTimer();
     return 0;
 }
