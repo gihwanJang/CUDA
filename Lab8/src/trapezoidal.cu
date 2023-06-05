@@ -9,7 +9,7 @@ __host__ __device__  double func(double x)
     return (x * x);
 }
 
-__host__ __device__ double Trapezoidal(long i, double h)
+__host__ __device__ double Trapezoidal(int i, double h)
 {
     double a = START + i * h;
     double b = a + h;
@@ -20,7 +20,7 @@ void serialTrapezoidal(double &serial_res, double h, DS_timer&timer, int mode)
 {
     timer.onTimer(mode);
 
-    for (long i = 0; i < SECTION; ++i)
+    for (int i = 0; i < SECTION; ++i)
         serial_res += Trapezoidal(i, h);
 
     timer.offTimer(mode);
@@ -33,7 +33,7 @@ void ompTrapezoidal(double &omp_res, double h, DS_timer&timer, int mode)
     #pragma omp parallel num_threads(THREAD_NUM) reduction(+ : omp_res)
     {
         #pragma omp for
-        for (long i = 0; i < SECTION; ++i)
+        for (int i = 0; i < SECTION; ++i)
             omp_res += Trapezoidal(i, h);
     }
 
@@ -42,32 +42,27 @@ void ompTrapezoidal(double &omp_res, double h, DS_timer&timer, int mode)
 
 __global__ void trapezoidal(double h, double*d_res)
 {
-    long idx = long(blockIdx.x) * long(blockDim.x) + threadIdx.x;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if(idx < SECTION){
-        double a = START + idx * h;
-        double b = a + h;
-        double sum = (a*a + b*b) * h / 2;
-	    atomicAdd(d_res, sum);
-    }
+	if(idx < SECTION)
+	    atomicAdd(d_res, Trapezoidal(idx, h));
 }
 
 __global__ void trapezoidalOptimizing(double h, double*d_res)
 {
-    long tid = long(blockIdx.x) * long(blockDim.x) + threadIdx.x;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	__shared__ double localVal[BLOCK_SIZE];
 	localVal[threadIdx.x] = 0;
 
-	if (tid >= SECTION)
+	if (idx >= SECTION)
 		return;
 
-	localVal[threadIdx.x] = Trapezoidal(tid, h);
+	localVal[threadIdx.x] = Trapezoidal(idx, h);
 
 	__syncthreads();
 
-	// reduction here
-	long offset = BLOCK_SIZE / 2;
+	int offset = BLOCK_SIZE / 2;
 
 	while (offset > 0) {
 		if (threadIdx.x < offset) {
@@ -84,15 +79,13 @@ __global__ void trapezoidalOptimizing(double h, double*d_res)
 }
 
 void kernelCall(double&cuda_res, double h, DS_timer&timer, int mode){
-    dim3 dimGrid(ceil(SECTION / (float)BLOCK_SIZE));
+    dim3 dimGrid(ceil(SECTION / (float)BLOCK_SIZE),1,1);
     double*d_res;
-
-    timer.onTimer(mode+2);
     cudaMalloc(&d_res, sizeof(double));
-    cudaMemset(d_res, 0, sizeof(double));
-    timer.offTimer(mode+2);
 
     timer.onTimer(mode);
+
+    cudaMemset(d_res, 0, sizeof(double));
 
     switch(mode)
     {
@@ -106,11 +99,7 @@ void kernelCall(double&cuda_res, double h, DS_timer&timer, int mode){
         break;
     }
 
-    cudaDeviceSynchronize();
-    
-    timer.offTimer(mode);
-
-    timer.onTimer(mode+2);
     cudaMemcpy(&cuda_res, d_res, sizeof(double), cudaMemcpyDeviceToHost);
-    timer.offTimer(mode+2);
+
+    timer.offTimer(mode);
 }
