@@ -1,16 +1,20 @@
 #define USE_MNIST_LOADER
 #define MNIST_DOUBLE
 
-#include <cuda.h>
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "mnist/mnist.h"
+
+#include "timer/DS_timer.h"
+#include "timer/DS_definitions.h"
+
 #include "cnn/layer.h"
 #include "cnn/neuralNet.h"
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+//timer
+DS_timer timer(4);
 
 //MNIST 데이터
 mnist_data *train_set, *test_set;
@@ -26,15 +30,27 @@ void loadData();
 void learn();
 unsigned int classify(double data[28][28]);
 void test();
-double forward_propagation(double data[28][28]);
-double back_propagation();
+void forward_propagation(double data[28][28], int mode);
+void back_propagation();
 
 int main(int argc, char const *argv[])
 {
-	srand(time(NULL));
+	timer.setTimerName(0, (char *)"total Learning");
+    timer.setTimerName(1, (char *)"kernel Learning");
+	timer.setTimerName(2, (char *)"total classify");
+    timer.setTimerName(3, (char *)"kernel classify");
+
 	loadData();
+
+	timer.onTimer(0);
 	learn();
+	timer.offTimer(0);
+
+	timer.onTimer(2);
 	test();
+	timer.offTimer(2);
+
+	timer.printTimer();
 	return 0;
 }
 
@@ -46,15 +62,14 @@ void loadData()
 }
 
 // 입력 이미지에 대한 forward propagation 수행
-double forward_propagation(double data[28][28])
+void forward_propagation(double data[28][28], int mode)
 {
 	float input[28][28];
 
-	for (int i = 0; i < 28; ++i) {
-		for (int j = 0; j < 28; ++j) {
+	// 입력 이미지 데이터 타입 변환 double -> float
+	for (int i = 0; i < 28; ++i)
+		for (int j = 0; j < 28; ++j)
 			input[i][j] = data[i][j];
-		}
-	}
 
 	// 각 레이어의 입력과 출력을 초기화
 	l_input.clear();
@@ -62,8 +77,7 @@ double forward_propagation(double data[28][28])
 	l_s.clear();
 	l_f.clear();
 
-	clock_t start, end;
-	start = clock();
+	timer.onTimer(mode);
 
 	// 입력 레이어에 데이터 설정
 	l_input.setOutput((float *)input);
@@ -83,16 +97,13 @@ double forward_propagation(double data[28][28])
 	fp_bias_f<<<64, 64>>>(l_f.preact, l_f.bias);
 	apply_activ_func<<<64, 64>>>(l_f.preact, l_f.output, l_f.O);
 	
-	end = clock();
-	return ((double) (end - start)) / CLOCKS_PER_SEC;
+	timer.offTimer(mode);
 }
 
 // back propagation 수행
-double back_propagation()
+void back_propagation()
 {
-	clock_t start, end;
-
-	start = clock();
+	timer.onTimer(1);
 
 	bp_weight_f<<<64, 64>>>((float(*)[6][6][6])l_f.d_weight, l_f.d_preact, (float(*)[6][6])l_s.output);
 	bp_bias_f<<<64, 64>>>(l_f.bias, l_f.d_preact);
@@ -111,8 +122,7 @@ double back_propagation()
 	update_grad<<<64, 64>>>(l_s.weight, l_s.d_weight, l_s.M * l_s.N);
 	update_grad<<<64, 64>>>(l_c.weight, l_c.d_weight, l_c.M * l_c.N);
 
-	end = clock();
-	return ((double)(end - start)) / CLOCKS_PER_SEC;
+	timer.offTimer(1);
 }
 
 void learn()
@@ -122,8 +132,6 @@ void learn()
 
 	float err;
 	int iter = 50;
-
-	double time_taken = 0.0;
 
 	printf("Learning\n");
 
@@ -135,7 +143,7 @@ void learn()
 		{
 			float tmp_err;
 
-			time_taken += forward_propagation(train_set[i].data);
+			forward_propagation(train_set[i].data, 1);
 
 			l_f.bp_clear();
 			l_s.bp_clear();
@@ -145,11 +153,11 @@ void learn()
 			cublasSnrm2(blas, 10, l_f.d_preact, 1, &tmp_err);
 			err += tmp_err;
 
-			time_taken += back_propagation();
+			back_propagation();
 		}
 
 		err /= train_cnt;
-		printf("error: %e, time_on_gpu: %lf\n", err, time_taken);
+		printf("error: %e\n", err);
 
 		if (err < threshold)
 		{
@@ -157,8 +165,6 @@ void learn()
 			break;
 		}
 	}
-
-	printf("\n Time - %lf\n", time_taken);
 }
 
 unsigned int classify(double data[28][28])
@@ -166,7 +172,7 @@ unsigned int classify(double data[28][28])
 	float res[10];
 	unsigned int max = 0;
 
-	forward_propagation(data);
+	forward_propagation(data, 3);
 
 	cudaMemcpy(res, l_f.output, sizeof(float) * 10, cudaMemcpyDeviceToHost);
 
