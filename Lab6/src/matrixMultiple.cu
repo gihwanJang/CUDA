@@ -69,31 +69,42 @@ __global__ void cudaMatrixMultiplicationUsingSharedMemory(float* matA, float* ma
 }
 */
 
-__global__ void cudaMatrixMultiplicationUsingSharedMemoryUpgrade(float* matA, float* matB, float* matC, long m, long n, long k){
+__global__ void cudaMatrixMultiplicationUsingSharedMemoryOptimized(float* matA, float* matB, float* matC, long m, long n, long k){
     __shared__ float sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ float sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
 
-    int row = blockDim.x * blockIdx.x + threadIdx.x;
-    int col = blockDim.y * blockIdx.y + threadIdx.y;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     float result = 0;
 
     for (int t = 0; t < ceil((float)k / BLOCK_SIZE); ++t) {
-        bool row_condition = ((row < m) && (t * BLOCK_SIZE + threadIdx.y) < k);
-        bool col_condition = ((col < n) && (t * BLOCK_SIZE + threadIdx.x) < k);
-        
-        sharedMatA[threadIdx.x][threadIdx.y] = row_condition ? matA[row * k + t * BLOCK_SIZE + threadIdx.y] : 0;
-        sharedMatB[threadIdx.x][threadIdx.y] = col_condition ? matB[(t * BLOCK_SIZE + threadIdx.x) * n + col] : 0;
+        // Load tiles into shared memory
+        int aRow = row;
+        int aCol = t * BLOCK_SIZE + threadIdx.x;
+        int bRow = t * BLOCK_SIZE + threadIdx.y;
+        int bCol = col;
+
+        if (aRow < m && aCol < k)
+            sharedMatA[threadIdx.y][threadIdx.x] = matA[aRow * k + aCol];
+        else
+            sharedMatA[threadIdx.y][threadIdx.x] = 0;
+
+        if (bRow < k && bCol < n)
+            sharedMatB[threadIdx.y][threadIdx.x] = matB[bRow * n + bCol];
+        else
+            sharedMatB[threadIdx.y][threadIdx.x] = 0;
 
         __syncthreads();
 
+        // Compute partial dot product
         for (int i = 0; i < BLOCK_SIZE; ++i)
-            result += sharedMatA[threadIdx.x][i] * sharedMatB[i][threadIdx.y];
+            result += sharedMatA[threadIdx.y][i] * sharedMatB[i][threadIdx.x];
 
         __syncthreads();
     }
 
-    if ((row < m) && (col < n))
+    if (row < m && col < n)
         matC[row * n + col] = result;
 }
 
@@ -218,7 +229,7 @@ int main(){
     timer.onTimer(3);
     //cudaMatrixMultiplication<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
     //cudaMatrixMultiplicationUsingSharedMemory<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
-    cudaMatrixMultiplicationUsingSharedMemoryUpgrade<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
+    cudaMatrixMultiplicationUsingSharedMemoryOptimized<<<gridDim, blockDim>>>(d_a, d_b, d_res, MAT_A_ROW_SIZE, MAT_B_COL_SIZE, MAT_A_COL_SIZE);
     cudaDeviceSynchronize();
     timer.offTimer(3);
 

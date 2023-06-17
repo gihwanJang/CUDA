@@ -11,12 +11,12 @@
 
 #define BLOCK_SIZE 16
 
-#define MAT_A_ROW_SIZE (2048) // m 
-#define MAT_A_COL_SIZE (2048) // k
+#define MAT_A_ROW_SIZE (1024) // m 
+#define MAT_A_COL_SIZE (512) // k
 #define MAT_A_SIZE (MAT_A_ROW_SIZE * MAT_A_COL_SIZE)
 
 #define MAT_B_ROW_SIZE (MAT_A_COL_SIZE)
-#define MAT_B_COL_SIZE (2048) // n
+#define MAT_B_COL_SIZE (1024) // n
 #define MAT_B_SIZE (MAT_B_ROW_SIZE * MAT_B_COL_SIZE)
 
 #define MAT_RES_SIZE (MAT_A_ROW_SIZE * MAT_B_COL_SIZE)
