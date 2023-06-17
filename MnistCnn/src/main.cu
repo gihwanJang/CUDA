@@ -41,7 +41,7 @@ Layer l_c = Layer(5 * 5, 6, 24 * 24 * 6);
 * 1개의 출력 채널
 * 6 * 6 * 6의 사이즈 입력
 */
-Layer l_s = Layer(4 * 4, 1, 6 * 6 * 6);\
+Layer l_p = Layer(4 * 4, 1, 6 * 6 * 6);
 /*
 * 합성곱 레이어
 * 풀링 레이어 크기의 입력(6 * 6* 6)
@@ -98,7 +98,7 @@ void forward_propagation(double data[28][28], int mode)
 	// 이미지에 대한 각 레이어의 입력과 출력을 초기화
 	l_input.clear();
 	l_c.clear();
-	l_s.clear();
+	l_p.clear();
 	l_f.clear();
 
 	timer.onTimer(mode);
@@ -107,18 +107,18 @@ void forward_propagation(double data[28][28], int mode)
 	l_input.setOutput((float *)input);
 	
 	// convolution layer의 forward propagation
-	fp_preact_c<<<64, 64>>>((float (*)[28])l_input.output, (float (*)[24][24])l_c.preact, (float (*)[5][5])l_c.weight);
-	fp_bias_c<<<64, 64>>>((float (*)[24][24])l_c.preact, l_c.bias);
+	fp_preact_conv<<<64, 64>>>((float (*)[28])l_input.output, (float (*)[24][24])l_c.preact, (float (*)[5][5])l_c.weight);
+	fp_bias_conv<<<64, 64>>>((float (*)[24][24])l_c.preact, l_c.bias);
 	apply_activ_func<<<64, 64>>>(l_c.preact, l_c.output, l_c.O);
 
 	// subSampling layer의 forward propagation
-	fp_preact_s<<<64, 64>>>((float (*)[24][24])l_c.output, (float (*)[6][6])l_s.preact, (float (*)[4][4])l_s.weight);
-	fp_bias_s<<<64, 64>>>((float (*)[6][6])l_s.preact, l_s.bias);
-	apply_activ_func<<<64, 64>>>(l_s.preact, l_s.output, l_s.O);
+	fp_preact_poll<<<64, 64>>>((float (*)[24][24])l_c.output, (float (*)[6][6])l_p.preact, (float (*)[4][4])l_p.weight);
+	fp_bias_poll<<<64, 64>>>((float (*)[6][6])l_p.preact, l_p.bias);
+	apply_activ_func<<<64, 64>>>(l_p.preact, l_p.output, l_p.O);
 
 	// fully connected layer의 forward propagation
-	fp_preact_f<<<64, 64>>>((float (*)[6][6])l_s.output, l_f.preact, (float (*)[6][6][6])l_f.weight);
-	fp_bias_f<<<64, 64>>>(l_f.preact, l_f.bias);
+	fp_preact_full<<<64, 64>>>((float (*)[6][6])l_p.output, l_f.preact, (float (*)[6][6][6])l_f.weight);
+	fp_bias_full<<<64, 64>>>(l_f.preact, l_f.bias);
 	apply_activ_func<<<64, 64>>>(l_f.preact, l_f.output, l_f.O);
 	
 	timer.offTimer(mode);
@@ -130,24 +130,24 @@ void back_propagation()
 	timer.onTimer(1);
 
 	// fully connected layer의 back propagation
-	bp_weight_f<<<64, 64>>>((float(*)[6][6][6])l_f.d_weight, l_f.d_preact, (float(*)[6][6])l_s.output);
-	bp_bias_f<<<64, 64>>>(l_f.bias, l_f.d_preact);
+	bp_weight_full<<<64, 64>>>((float(*)[6][6][6])l_f.d_weight, l_f.d_preact, (float(*)[6][6])l_p.output);
+	bp_bias_full<<<64, 64>>>(l_f.bias, l_f.d_preact);
 
 	// subSampling layer의 back propagation
-	bp_output_s<<<64, 64>>>((float(*)[6][6])l_s.d_output, (float(*)[6][6][6])l_f.weight, l_f.d_preact);
-	bp_preact_s<<<64, 64>>>((float(*)[6][6])l_s.d_preact, (float(*)[6][6])l_s.d_output, (float(*)[6][6])l_s.preact);
-	bp_weight_s<<<64, 64>>>((float(*)[4][4])l_s.d_weight, (float(*)[6][6])l_s.d_preact, (float(*)[24][24])l_c.output);
-	bp_bias_s<<<64, 64>>>(l_s.bias, (float(*)[6][6])l_s.d_preact);
+	bp_output_poll<<<64, 64>>>((float(*)[6][6])l_p.d_output, (float(*)[6][6][6])l_f.weight, l_f.d_preact);
+	bp_preact_poll<<<64, 64>>>((float(*)[6][6])l_p.d_preact, (float(*)[6][6])l_p.d_output, (float(*)[6][6])l_p.preact);
+	bp_weight_poll<<<64, 64>>>((float(*)[4][4])l_p.d_weight, (float(*)[6][6])l_p.d_preact, (float(*)[24][24])l_c.output);
+	bp_bias_poll<<<64, 64>>>(l_p.bias, (float(*)[6][6])l_p.d_preact);
 
 	// convolution layre의 back propagation
-	bp_output_c<<<64, 64>>>((float(*)[24][24])l_c.d_output, (float(*)[4][4])l_s.weight, (float(*)[6][6])l_s.d_preact);
-	bp_preact_c<<<64, 64>>>((float(*)[24][24])l_c.d_preact, (float(*)[24][24])l_c.d_output, (float(*)[24][24])l_c.preact);
-	bp_weight_c<<<64, 64>>>((float(*)[5][5])l_c.d_weight, (float(*)[24][24])l_c.d_preact, (float(*)[28])l_input.output);
-	bp_bias_c<<<64, 64>>>(l_c.bias, (float(*)[24][24])l_c.d_preact);
+	bp_output_conv<<<64, 64>>>((float(*)[24][24])l_c.d_output, (float(*)[4][4])l_p.weight, (float(*)[6][6])l_p.d_preact);
+	bp_preact_conv<<<64, 64>>>((float(*)[24][24])l_c.d_preact, (float(*)[24][24])l_c.d_output, (float(*)[24][24])l_c.preact);
+	bp_weight_conv<<<64, 64>>>((float(*)[5][5])l_c.d_weight, (float(*)[24][24])l_c.d_preact, (float(*)[28])l_input.output);
+	bp_bias_conv<<<64, 64>>>(l_c.bias, (float(*)[24][24])l_c.d_preact);
 
 	// 가중치 업데이트
 	update_grad<<<64, 64>>>(l_f.weight, l_f.d_weight, l_f.M * l_f.N);
-	update_grad<<<64, 64>>>(l_s.weight, l_s.d_weight, l_s.M * l_s.N);
+	update_grad<<<64, 64>>>(l_p.weight, l_p.d_weight, l_p.M * l_p.N);
 	update_grad<<<64, 64>>>(l_c.weight, l_c.d_weight, l_c.M * l_c.N);
 
 	timer.offTimer(1);
@@ -163,6 +163,7 @@ void learn()
 	int iter = 50; // 학습 반복 횟수
 
 	printf("Learning\n");
+	printf("learnig data : %d\n", train_cnt);
 
 	for(int t = 1; t <= iter; ++t)
 	{
@@ -176,7 +177,7 @@ void learn()
 			forward_propagation(train_set[i].data, 1);
 
 			l_f.bp_clear();
-			l_s.bp_clear();
+			l_p.bp_clear();
 			l_c.bp_clear();
 
 			// 오차에 대한 갱신
@@ -184,6 +185,7 @@ void learn()
 			cublasSnrm2(blas, 10, l_f.d_preact, 1, &tmp_err);
 			err += tmp_err;
 
+			// 가중치 업데이트를 위한 back_propagation
 			back_propagation();
 		}
 
@@ -229,6 +231,8 @@ void test()
 
 		printf("classify : %d, answer : %d\n", clfy, ans);
 	}
+
+	printf("\ntotal test img : %d, error test img %d\n", test_cnt, error);
 
 	// 최종 오차 출력
 	printf("Error Rate: %.2lf%%\n", double(error) / double(test_cnt) * 100.0);

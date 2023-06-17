@@ -17,7 +17,7 @@ __global__ void apply_activ_func(float *input, float *output, int N)
 }
 
 // 오차 계산
-__global__ void update_error(float *err, float *output, unsigned int Y, int N)
+__global__ void update_error(float *err, float *output, unsigned int Y, int N) 
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -36,8 +36,8 @@ __global__ void update_grad(float *output, float *grad, int N)
         output[i] += dt * grad[i];
 }
 
-// 
-__global__ void fp_preact_c(float input[28][28], float preact[6][24][24], float weight[6][5][5])
+// convolution layer에 대한 forward propagation, 해당 레이어의 기울기 -> 입력 레이어의 output에 대한 5 x 5 가중치 곱셈
+__global__ void fp_preact_conv(float input[28][28], float preact[6][24][24], float weight[6][5][5])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -57,8 +57,8 @@ __global__ void fp_preact_c(float input[28][28], float preact[6][24][24], float 
     }
 }
 
-// 
-__global__ void fp_bias_c(float preact[6][24][24], float bias[6])
+// convolution layer에 대한 forward propagation, 해당 레이어에 바이어스 값 합산
+__global__ void fp_bias_conv(float preact[6][24][24], float bias[6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -76,8 +76,8 @@ __global__ void fp_bias_c(float preact[6][24][24], float bias[6])
     }
 }
 
-//
-__global__ void fp_preact_s(float input[6][24][24], float preact[6][6][6], float weight[1][4][4])
+// polling layer에 대한 forward propagation, 합성곱 레이어dml output에 대한 4 x 4 가중치 곱셈
+__global__ void fp_preact_poll(float input[6][24][24], float preact[6][6][6], float weight[1][4][4])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -97,8 +97,8 @@ __global__ void fp_preact_s(float input[6][24][24], float preact[6][6][6], float
     }
 }
 
-// 
-__global__ void fp_bias_s(float preact[6][6][6], float bias[1])
+// polling layer에 대한 forward propagation, 해당 레이어에 바이어스 값 합산
+__global__ void fp_bias_poll(float preact[6][6][6], float bias[1])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -116,8 +116,8 @@ __global__ void fp_bias_s(float preact[6][6][6], float bias[1])
     }
 }
 
-// 
-__global__ void fp_preact_f(float input[6][6][6], float preact[10], float weight[10][6][6][6])
+// fully connected layer에 대한 forward propagation, polling 레이어에 대한 가중치 곱셈
+__global__ void fp_preact_full(float input[6][6][6], float preact[10], float weight[10][6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -136,8 +136,8 @@ __global__ void fp_preact_f(float input[6][6][6], float preact[10], float weight
     }
 }
 
-// 
-__global__ void fp_bias_f(float preact[10], float bias[10])
+// fully connected layer에 대한 forward propagation, 해당 레이어에 바이어스 값 합산
+__global__ void fp_bias_full(float preact[10], float bias[10])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -148,8 +148,8 @@ __global__ void fp_bias_f(float preact[10], float bias[10])
         preact[i] += bias[i];
 }
 
-//
-__global__ void bp_weight_f(float d_weight[10][6][6][6], float d_preact[10], float p_output[6][6][6])
+// fully connected layer에 대한 back propagation, 가중치를 계산하기 위해 활성화 함수 기울기와 해당 위치의 출력 활성화 값을 곱셈
+__global__ void bp_weight_full(float d_weight[10][6][6][6], float d_preact[10], float p_output[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -168,8 +168,8 @@ __global__ void bp_weight_f(float d_weight[10][6][6][6], float d_preact[10], flo
     }
 }
 
-//
-__global__ void bp_bias_f(float bias[10], float d_preact[10])
+// fully connected layer에 대한 바이어스 값 갱신
+__global__ void bp_bias_full(float bias[10], float d_preact[10])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -180,8 +180,8 @@ __global__ void bp_bias_f(float bias[10], float d_preact[10])
         bias[idx] += dt * d_preact[idx];
 }
 
-//
-__global__ void bp_output_s(float d_output[6][6][6], float n_weight[10][6][6][6], float nd_preact[10])
+// polling layer에 대한 back propagation, 해당 레이어의 출력 값에 대한 flully connected의 가중치와 기울기의 곱의 합산
+__global__ void bp_output_poll(float d_output[6][6][6], float n_weight[10][6][6][6], float nd_preact[10])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -200,8 +200,8 @@ __global__ void bp_output_s(float d_output[6][6][6], float n_weight[10][6][6][6]
     }
 }
 
-//
-__global__ void bp_preact_s(float d_preact[6][6][6], float d_output[6][6][6], float preact[6][6][6])
+// polling layer에 대한 back propagation, 해당 레이어의 기울기 값에 대하여 해당 레이어의 출력과 활성화 함수를 거친 기울기 값의 곱셈
+__global__ void bp_preact_poll(float d_preact[6][6][6], float d_output[6][6][6], float preact[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -221,8 +221,8 @@ __global__ void bp_preact_s(float d_preact[6][6][6], float d_output[6][6][6], fl
     }
 }
 
-//
-__global__ void bp_weight_s(float d_weight[1][4][4], float d_preact[6][6][6], float p_output[6][24][24])
+// polling layer에 대한 back propagation, 해당 레이어의 가중치에 대하여 해당 레이어의 기울기와 출력가의 곱의 합산
+__global__ void bp_weight_poll(float d_weight[1][4][4], float d_preact[6][6][6], float p_output[6][24][24])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -244,8 +244,8 @@ __global__ void bp_weight_s(float d_weight[1][4][4], float d_preact[6][6][6], fl
     }
 }
 
-//
-__global__ void bp_bias_s(float bias[1], float d_preact[6][6][6])
+// polling layer에 대한 back propagation, 해당 레이어의 바이어스 값을 업데이트
+__global__ void bp_bias_poll(float bias[1], float d_preact[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -264,8 +264,8 @@ __global__ void bp_bias_s(float bias[1], float d_preact[6][6][6])
     }
 }
 
-//
-__global__ void bp_output_c(float d_output[6][24][24], float n_weight[1][4][4], float nd_preact[6][6][6])
+// convolution layer에 대한 back propagation, 해당 레이어의 출력에 대하여 poling layer의 가중치와 기울기 곱의 합
+__global__ void bp_output_conv(float d_output[6][24][24], float n_weight[1][4][4], float nd_preact[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -286,8 +286,8 @@ __global__ void bp_output_c(float d_output[6][24][24], float n_weight[1][4][4], 
     }
 }
 
-//
-__global__ void bp_preact_c(float d_preact[6][24][24], float d_output[6][24][24], float preact[6][24][24])
+// convolution layer에 대한 back propagation, 해당 레이어의 기울기에 대하여 해당 레이어의 출력과 기울기의 곱으로 갱신
+__global__ void bp_preact_conv(float d_preact[6][24][24], float d_output[6][24][24], float preact[6][24][24])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -307,8 +307,8 @@ __global__ void bp_preact_c(float d_preact[6][24][24], float d_output[6][24][24]
     }
 }
 
-//
-__global__ void bp_weight_c(float d_weight[6][5][5], float d_preact[6][24][24], float p_output[28][28])
+// convolution layer에 대한 back propagation, 해당 레이어의 가중치에 대하여 기울기와 input layer의 출력 값으 곱의 합
+__global__ void bp_weight_conv(float d_weight[6][5][5], float d_preact[6][24][24], float p_output[28][28])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
@@ -329,8 +329,8 @@ __global__ void bp_weight_c(float d_weight[6][5][5], float d_preact[6][24][24], 
     }
 }
 
-//
-__global__ void bp_bias_c(float bias[6], float d_preact[6][24][24])
+// convolution layer에 대한 back propagation, 해당 레이어의 바이어스 업데이트
+__global__ void bp_bias_conv(float bias[6], float d_preact[6][24][24])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
