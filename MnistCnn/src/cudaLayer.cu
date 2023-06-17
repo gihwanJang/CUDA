@@ -1,7 +1,7 @@
-#include "cnn/layer.h"
+#include "cnn/cudaLayer.h"
 
 // layer 생성자
-Layer::Layer(int M, int N, int O)
+CudaLayer::CudaLayer(int M, int N, int O)
 {
     this->M = M; // 입력
     this->N = N; // 출력
@@ -39,7 +39,7 @@ Layer::Layer(int M, int N, int O)
 }
 
 // layer 소멸자
-Layer::~Layer()
+CudaLayer::~CudaLayer()
 {
     cudaFree(output);
     cudaFree(preact);
@@ -52,20 +52,20 @@ Layer::~Layer()
 }
 
 // host -> device 메모리 복사
-void Layer::setOutput(float *data)
+void CudaLayer::setOutput(float *data)
 {
     cudaMemcpy(output, data, sizeof(float) * O, cudaMemcpyHostToDevice);
 }
 
 // 출력, 활성화 입력 초기화
-void Layer::clear()
+void CudaLayer::clear()
 {
     cudaMemset(output, 0, sizeof(float) * O);
     cudaMemset(preact, 0, sizeof(float) * O);
 }
 
 // 기울기 값 초기화
-void Layer::bp_clear()
+void CudaLayer::bp_clear()
 {
     cudaMemset(d_output, 0, sizeof(float) * O);
     cudaMemset(d_preact, 0, sizeof(float) * O);
