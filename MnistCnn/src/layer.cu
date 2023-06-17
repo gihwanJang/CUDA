@@ -3,12 +3,12 @@
 // layer 생성자
 Layer::Layer(int M, int N, int O)
 {
-    this->M = M;
-    this->N = N;
-    this->O = O;
+    this->M = M; // 입력
+    this->N = N; // 출력
+    this->O = O; // 뉴런
 
-    float h_bias[N];
-    float h_weight[N][M];
+    float h_bias[N]; // host 편향
+    float h_weight[N][M]; //host 가중치
 
     output = NULL;
     preact = NULL;
@@ -17,8 +17,10 @@ Layer::Layer(int M, int N, int O)
 
     for (int i = 0; i < N; ++i)
     {
+        // 편향 값을 -0.5 ~ 0.5 난수 초기화
         h_bias[i] = 0.5f - float(rand()) / float(RAND_MAX);
 
+        // 가중치 값을 -0.5 ~ 0.5 난수 초기화
         for (int j = 0; j < M; ++j)
             h_weight[i][j] = 0.5f - float(rand()) / float(RAND_MAX);
     }
@@ -55,13 +57,14 @@ void Layer::setOutput(float *data)
     cudaMemcpy(output, data, sizeof(float) * O, cudaMemcpyHostToDevice);
 }
 
-// Reset GPU memory
+// 출력, 활성화 입력 초기화
 void Layer::clear()
 {
     cudaMemset(output, 0, sizeof(float) * O);
     cudaMemset(preact, 0, sizeof(float) * O);
 }
 
+// 기울기 값 초기화
 void Layer::bp_clear()
 {
     cudaMemset(d_output, 0, sizeof(float) * O);

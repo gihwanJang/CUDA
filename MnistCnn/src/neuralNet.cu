@@ -36,6 +36,7 @@ __global__ void update_grad(float *output, float *grad, int N)
         output[i] += dt * grad[i];
 }
 
+// 
 __global__ void fp_preact_c(float input[28][28], float preact[6][24][24], float weight[6][5][5])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -56,6 +57,7 @@ __global__ void fp_preact_c(float input[28][28], float preact[6][24][24], float 
     }
 }
 
+// 
 __global__ void fp_bias_c(float preact[6][24][24], float bias[6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -74,13 +76,12 @@ __global__ void fp_bias_c(float preact[6][24][24], float bias[6])
     }
 }
 
-// 입력 값에 대하여 4x4 필터 합성곱
+//
 __global__ void fp_preact_s(float input[6][24][24], float preact[6][6][6], float weight[1][4][4])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
     int size = blockDim.x * gridDim.x;
 
-    // preactivation 횟수
     int N = 4 * 4 * 6 * 6 * 6;
 
     for (int n = N * t_id / size; n < N * (t_id + 1) / size; ++n)
@@ -96,6 +97,7 @@ __global__ void fp_preact_s(float input[6][24][24], float preact[6][6][6], float
     }
 }
 
+// 
 __global__ void fp_bias_s(float preact[6][6][6], float bias[1])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -114,6 +116,7 @@ __global__ void fp_bias_s(float preact[6][6][6], float bias[1])
     }
 }
 
+// 
 __global__ void fp_preact_f(float input[6][6][6], float preact[10], float weight[10][6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -133,6 +136,7 @@ __global__ void fp_preact_f(float input[6][6][6], float preact[10], float weight
     }
 }
 
+// 
 __global__ void fp_bias_f(float preact[10], float bias[10])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -144,6 +148,7 @@ __global__ void fp_bias_f(float preact[10], float bias[10])
         preact[i] += bias[i];
 }
 
+//
 __global__ void bp_weight_f(float d_weight[10][6][6][6], float d_preact[10], float p_output[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -163,6 +168,7 @@ __global__ void bp_weight_f(float d_weight[10][6][6][6], float d_preact[10], flo
     }
 }
 
+//
 __global__ void bp_bias_f(float bias[10], float d_preact[10])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -174,6 +180,7 @@ __global__ void bp_bias_f(float bias[10], float d_preact[10])
         bias[idx] += dt * d_preact[idx];
 }
 
+//
 __global__ void bp_output_s(float d_output[6][6][6], float n_weight[10][6][6][6], float nd_preact[10])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -193,6 +200,7 @@ __global__ void bp_output_s(float d_output[6][6][6], float n_weight[10][6][6][6]
     }
 }
 
+//
 __global__ void bp_preact_s(float d_preact[6][6][6], float d_output[6][6][6], float preact[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -213,6 +221,7 @@ __global__ void bp_preact_s(float d_preact[6][6][6], float d_output[6][6][6], fl
     }
 }
 
+//
 __global__ void bp_weight_s(float d_weight[1][4][4], float d_preact[6][6][6], float p_output[6][24][24])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -235,6 +244,7 @@ __global__ void bp_weight_s(float d_weight[1][4][4], float d_preact[6][6][6], fl
     }
 }
 
+//
 __global__ void bp_bias_s(float bias[1], float d_preact[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -254,6 +264,7 @@ __global__ void bp_bias_s(float bias[1], float d_preact[6][6][6])
     }
 }
 
+//
 __global__ void bp_output_c(float d_output[6][24][24], float n_weight[1][4][4], float nd_preact[6][6][6])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -275,6 +286,7 @@ __global__ void bp_output_c(float d_output[6][24][24], float n_weight[1][4][4], 
     }
 }
 
+//
 __global__ void bp_preact_c(float d_preact[6][24][24], float d_output[6][24][24], float preact[6][24][24])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -295,6 +307,7 @@ __global__ void bp_preact_c(float d_preact[6][24][24], float d_output[6][24][24]
     }
 }
 
+//
 __global__ void bp_weight_c(float d_weight[6][5][5], float d_preact[6][24][24], float p_output[28][28])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -316,6 +329,7 @@ __global__ void bp_weight_c(float d_weight[6][5][5], float d_preact[6][24][24], 
     }
 }
 
+//
 __global__ void bp_bias_c(float bias[6], float d_preact[6][24][24])
 {
     int t_id = blockIdx.x * blockDim.x + threadIdx.x;
