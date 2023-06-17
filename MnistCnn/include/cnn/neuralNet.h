@@ -11,30 +11,6 @@
 #define dt (1.0E-01f)
 #define threshold (1.0E-02f)
 
-class Layer
-{
-public:
-    int M, N, O;
-
-    float *output;
-    float *preact;
-
-    float *bias;
-    float *weight;
-
-    float *d_output;
-    float *d_preact;
-    float *d_weight;
-
-    Layer(int M, int N, int O);
-
-    ~Layer();
-
-    void setOutput(float *data);
-    void clear();
-    void bp_clear();
-};
-
 // math functions
 __device__ float activ_func(float v);
 __global__ void apply_activ_func(float *input, float *output, int N);

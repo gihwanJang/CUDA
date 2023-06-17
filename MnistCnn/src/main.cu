@@ -5,15 +5,18 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "mnist.h"
-#include "layer.h"
+#include "mnist/mnist.h"
+#include "cnn/layer.h"
+#include "cnn/neuralNet.h"
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
+//MNIST 데이터
 mnist_data *train_set, *test_set;
 unsigned int train_cnt, test_cnt;
 
+// Layer 객체
 Layer l_input = Layer(0, 0, 28 * 28);
 Layer l_c = Layer(5 * 5, 6, 24 * 24 * 6);
 Layer l_s = Layer(4 * 4, 1, 6 * 6 * 6);
@@ -35,12 +38,14 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 
+// MNIST 데이터 로드
 void loadData()
 {
 	mnist_load("data/train-images.idx3-ubyte", "data/train-labels.idx1-ubyte", &train_set, &train_cnt);
 	mnist_load("data/t10k-images.idx3-ubyte", "data/t10k-labels.idx1-ubyte", &test_set, &test_cnt);
 }
 
+// 입력 이미지에 대한 forward propagation 수행
 double forward_propagation(double data[28][28])
 {
 	float input[28][28];
@@ -51,6 +56,7 @@ double forward_propagation(double data[28][28])
 		}
 	}
 
+	// 각 레이어의 입력과 출력을 초기화
 	l_input.clear();
 	l_c.clear();
 	l_s.clear();
@@ -59,16 +65,20 @@ double forward_propagation(double data[28][28])
 	clock_t start, end;
 	start = clock();
 
+	// 입력 레이어에 데이터 설정
 	l_input.setOutput((float *)input);
 	
+	// convolution layer의 forward propagation
 	fp_preact_c<<<64, 64>>>((float (*)[28])l_input.output, (float (*)[24][24])l_c.preact, (float (*)[5][5])l_c.weight);
 	fp_bias_c<<<64, 64>>>((float (*)[24][24])l_c.preact, l_c.bias);
 	apply_activ_func<<<64, 64>>>(l_c.preact, l_c.output, l_c.O);
 
+	// subSampling layer의 forward propagation
 	fp_preact_s<<<64, 64>>>((float (*)[24][24])l_c.output, (float (*)[6][6])l_s.preact, (float (*)[4][4])l_s.weight);
 	fp_bias_s<<<64, 64>>>((float (*)[6][6])l_s.preact, l_s.bias);
 	apply_activ_func<<<64, 64>>>(l_s.preact, l_s.output, l_s.O);
 
+	// fully connected layer의 forward propagation
 	fp_preact_f<<<64, 64>>>((float (*)[6][6])l_s.output, l_f.preact, (float (*)[6][6][6])l_f.weight);
 	fp_bias_f<<<64, 64>>>(l_f.preact, l_f.bias);
 	apply_activ_func<<<64, 64>>>(l_f.preact, l_f.output, l_f.O);
@@ -77,6 +87,7 @@ double forward_propagation(double data[28][28])
 	return ((double) (end - start)) / CLOCKS_PER_SEC;
 }
 
+// back propagation 수행
 double back_propagation()
 {
 	clock_t start, end;
